@@ -214,7 +214,7 @@ export default function AIAssistant() {
           </div>
           <div>
             <p className="text-sm font-semibold text-white">FinWise AI</p>
-            <p className="text-xs text-slate-500">Powered by Gemini</p>
+            <p className="text-xs text-slate-500">Powered by Gemini 2.5</p>
           </div>
         </div>
 
@@ -429,7 +429,7 @@ export default function AIAssistant() {
         </form>
 
         <div className="flex items-center justify-between mt-2">
-          <p className="text-[10px] text-slate-600">Powered by Gemini 2.0 Flash · ElevenLabs TTS</p>
+          <p className="text-[10px] text-slate-600">Powered by Gemini 2.5 Flash · ElevenLabs TTS</p>
           <button
             onClick={() => setShowQuick(!showQuick)}
             className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors"

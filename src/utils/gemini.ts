@@ -31,7 +31,7 @@ export function initChat(financialContext: string) {
   const key = getGeminiKey()
   if (!key) throw new Error('NO_KEY')
   const genAI = new GoogleGenerativeAI(key)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
   lastContext = financialContext
   chatSession = model.startChat({
     history: [

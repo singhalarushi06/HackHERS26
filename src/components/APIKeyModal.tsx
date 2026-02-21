@@ -35,11 +35,20 @@ export default function APIKeyModal({ onClose, onSave }: Props) {
       setStatus((s) => ({ ...s, gemini: 'err' }))
     }
 
-    // Test ElevenLabs
+    // Test ElevenLabs via TTS endpoint (avoids needing user_read permission)
     try {
-      const res = await fetch('https://api.elevenlabs.io/v1/user', {
-        headers: { 'xi-api-key': elevenKey },
-      })
+      const res = await fetch(
+        'https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL',
+        {
+          method: 'POST',
+          headers: { 'xi-api-key': elevenKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: 'Hi',
+            model_id: 'eleven_turbo_v2_5',
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+          }),
+        }
+      )
       setStatus((s) => ({ ...s, eleven: res.ok ? 'ok' : 'err' }))
     } catch {
       setStatus((s) => ({ ...s, eleven: 'err' }))

@@ -1,17 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { sendMessage, resetChat, initChat, hasGeminiKey } from '../utils/gemini'
+import { sendMessage, resetChat, initChat } from '../utils/gemini'
 import { speakText, stopSpeaking } from '../utils/elevenlabs'
 import { buildFinancialContext } from '../utils/spending'
 import { ChatMessage } from '../types'
 import {
   Sparkles, Send, Mic, MicOff, Volume2, VolumeX,
-  RotateCcw, Loader2, Bot, User, ChevronDown, Key, AlertCircle
+  RotateCcw, Loader2, Bot, User, ChevronDown
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
-import APIKeyModal from './APIKeyModal'
-
 const QUICK_PROMPTS = [
   "What's my daily spending summary?",
   "Show me my weekly breakdown",
@@ -40,9 +38,6 @@ export default function AIAssistant() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [autoSpeak, setAutoSpeak] = useState(false)
   const [showQuick, setShowQuick] = useState(true)
-  const [showKeyModal, setShowKeyModal] = useState(false)
-  const [geminiReady, setGeminiReady] = useState(hasGeminiKey())
-
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -135,13 +130,9 @@ export default function AIAssistant() {
       }
     } catch (err) {
       const errStr = String(err)
-      let errContent = ''
+      let errContent = `❌ Something went wrong: ${errStr}. Please try again.`
       if (errStr.includes('NO_KEY') || errStr.includes('API key')) {
-        errContent = "🔑 No Gemini API key found. Click the **Key** button in the header to add your key. Get one free at [aistudio.google.com](https://aistudio.google.com/apikey)."
-      } else if (errStr.includes('leaked') || errStr.includes('PERMISSION_DENIED')) {
-        errContent = "⚠️ Your Gemini API key has been revoked (possibly flagged as leaked). Please generate a **new key** at [aistudio.google.com](https://aistudio.google.com/apikey) and paste it via the 🔑 Key button above."
-      } else {
-        errContent = `❌ Error: ${errStr}. Please check your API key in settings.`
+        errContent = '❌ AI service is temporarily unavailable. Please try again later.'
       }
       const errMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -182,25 +173,6 @@ export default function AIAssistant() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* API Key Modal */}
-      {showKeyModal && (
-        <APIKeyModal
-          onClose={() => setShowKeyModal(false)}
-          onSave={(gKey, eKey) => {
-            if (gKey) {
-              setGeminiReady(true)
-              if (user) {
-                const ctx = buildFinancialContext(
-                  transactions, user.monthlyBudget, user.categoryBudgets, user.userType, user.name
-                )
-                try { initChat(ctx) } catch {}
-              }
-            }
-            if (eKey) { /* key saved to localStorage */ }
-          }}
-        />
-      )}
-
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/5 bg-dark-900/60">
         <div className="flex items-center gap-2.5">
@@ -219,19 +191,6 @@ export default function AIAssistant() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* API Key button */}
-          <button
-            onClick={() => setShowKeyModal(true)}
-            title="Configure API keys"
-            className={`p-1.5 rounded-lg transition-all ${
-              !geminiReady
-                ? 'bg-amber-500/20 text-amber-400 animate-pulse'
-                : 'text-slate-500 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Key className="w-4 h-4" />
-          </button>
-
           {/* Auto-speak toggle */}
           <button
             onClick={() => setAutoSpeak(!autoSpeak)}
@@ -254,19 +213,6 @@ export default function AIAssistant() {
           </button>
         </div>
       </div>
-
-      {/* No-key warning banner */}
-      {!geminiReady && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/20">
-          <AlertCircle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-          <p className="text-xs text-amber-300 flex-1">
-            Gemini API key needed.{' '}
-            <button onClick={() => setShowKeyModal(true)} className="underline font-medium hover:text-amber-200">
-              Add key →
-            </button>
-          </p>
-        </div>
-      )}
 
       {/* Voice wave indicator */}
       {isListening && (

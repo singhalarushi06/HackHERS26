@@ -1,11 +1,6 @@
 function getElevenKeys(): string[] {
-  // Returns keys to try in order: localStorage first, then .env
-  const lsKey = localStorage.getItem('fw_eleven_key') || ''
   const envKey = (import.meta.env.VITE_ELEVENLABS_API_KEY as string) || ''
-  const keys: string[] = []
-  if (lsKey) keys.push(lsKey)
-  if (envKey && envKey !== lsKey) keys.push(envKey)
-  return keys
+  return envKey ? [envKey] : []
 }
 
 // Sarah - Mature, Reassuring, Confident (confirmed working voice)
@@ -39,12 +34,6 @@ export async function speakText(text: string): Promise<void> {
       const response = await tryTTS(text, key)
       if (!response.ok) {
         // If localStorage key is bad (401/403), clear it so env key is used next time
-        if (response.status === 401 || response.status === 403) {
-          const envKey = (import.meta.env.VITE_ELEVENLABS_API_KEY as string) || ''
-          if (key !== envKey) {
-            localStorage.removeItem('fw_eleven_key')
-          }
-        }
         continue // try next key
       }
 

@@ -1,11 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 function getGeminiKey(): string {
-  return (
-    localStorage.getItem('fw_gemini_key') ||
-    (import.meta.env.VITE_GEMINI_API_KEY as string) ||
-    ''
-  )
+  return (import.meta.env.VITE_GEMINI_API_KEY as string) || ''
 }
 
 const SYSTEM_PROMPT = `You are FinWise AI, a smart personal finance assistant embedded in the FinWise budgeting app. 
@@ -22,10 +18,6 @@ Keep responses to 3-5 sentences unless a plan or detailed breakdown is requested
 type ChatSession = ReturnType<ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel>['startChat']>
 let chatSession: ChatSession | null = null
 let lastContext = ''
-
-export function hasGeminiKey(): boolean {
-  return !!getGeminiKey()
-}
 
 export function initChat(financialContext: string) {
   const key = getGeminiKey()

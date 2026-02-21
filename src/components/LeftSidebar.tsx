@@ -8,7 +8,6 @@ import {
 import { motion } from 'framer-motion'
 import { fmt, filterByPeriod, getTotalSpending } from '../utils/spending'
 import AddTransactionModal from './AddTransactionModal'
-import APIKeyModal from './APIKeyModal'
 
 type Tab = 'dashboard' | 'transactions' | 'categories' | 'goals' | 'settings'
 
@@ -36,7 +35,6 @@ export default function LeftSidebar() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const [showAddTx, setShowAddTx] = useState(false)
-  const [showKeyModal, setShowKeyModal] = useState(false)
 
   if (!user) return null
 
@@ -92,10 +90,7 @@ export default function LeftSidebar() {
         {NAV.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
-            onClick={() => {
-              if (id === 'settings') { setShowKeyModal(true); return }
-              setActiveTab(id as Tab)
-            }}
+            onClick={() => setActiveTab(id as Tab)}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 ${
               activeTab === id
                 ? 'bg-primary-500/15 text-primary-300 border border-primary-500/25'
@@ -139,7 +134,6 @@ export default function LeftSidebar() {
       </div>
 
       {showAddTx && <AddTransactionModal onClose={() => setShowAddTx(false)} />}
-      {showKeyModal && <APIKeyModal onClose={() => setShowKeyModal(false)} onSave={() => {}} />}
     </div>
   )
 }

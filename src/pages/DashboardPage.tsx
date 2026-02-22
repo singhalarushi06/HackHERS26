@@ -3,10 +3,12 @@ import { useAuth } from '../context/AuthContext'
 import LeftSidebar from '../components/LeftSidebar'
 import MainDashboard from '../components/MainDashboard'
 import Transactions from '../components/Transactions'
+import CategoriesPanel from '../components/CategoriesPanel'
+import ProfileSettings from '../components/ProfileSettings'
 import AIAssistant from '../components/AIAssistant'
 import { initChat } from '../utils/gemini'
 import { buildFinancialContext } from '../utils/spending'
-import { Target, Settings, PieChart } from 'lucide-react'
+import { Target } from 'lucide-react'
 
 type Tab = 'dashboard' | 'agent' | 'transactions' | 'categories' | 'goals' | 'settings'
 
@@ -50,9 +52,9 @@ export default function DashboardPage() {
   function renderMiddlePanel() {
     switch (activeTab) {
       case 'transactions': return <Transactions />
-      case 'categories': return <PlaceholderPanel icon={<PieChart className="w-7 h-7 text-accent-purple" />} title="Categories" description="Detailed category breakdowns coming soon." />
+      case 'categories': return <CategoriesPanel />
+      case 'settings': return <ProfileSettings />
       case 'goals': return <PlaceholderPanel icon={<Target className="w-7 h-7 text-accent-green" />} title="Goals" description="Set and track your savings goals here." />
-      case 'settings': return <PlaceholderPanel icon={<Settings className="w-7 h-7 text-primary-400" />} title="Profile Settings" description="Update your profile and preferences." />
       case 'agent': return <PlaceholderPanel icon={<span className="text-3xl">🤖</span>} title="AI Assistant" description="Your AI assistant is in the right panel — ask it anything!" />
       default: return <MainDashboard />
     }

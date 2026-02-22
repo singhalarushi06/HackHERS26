@@ -71,12 +71,12 @@ export default function MainDashboard() {
     : total
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto scrollbar-thin">
+    <div className="flex flex-col h-full overflow-y-auto scrollbar-thin bg-[#d5b895]">
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-dark-900/40 sticky top-0 z-10 backdrop-blur-sm">
         <div>
           <h1 className="text-lg font-bold text-white">Financial Overview</h1>
-          <p className="text-xs text-slate-500">Welcome back, {user.name.split(' ')[0]} 👋</p>
+          <p className="text-xs text-white">Welcome back, {user.name.split(' ')[0]} 👋</p>
         </div>
         {/* Period Tabs */}
         <div className="flex gap-1 bg-white/5 rounded-xl p-0.5">
@@ -85,7 +85,7 @@ export default function MainDashboard() {
               key={p}
               onClick={() => setPeriod(p)}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 ${
-                period === p ? 'bg-primary-500 text-white shadow' : 'text-slate-400 hover:text-white'
+                period === p ? 'bg-primary-500 text-white shadow' : 'text-white hover:text-black'
               }`}
             >
               {PERIOD_LABELS[p]}
@@ -97,32 +97,32 @@ export default function MainDashboard() {
       <div className="flex-1 p-5 space-y-5">
         {/* KPI Cards */}
         <div className="grid grid-cols-4 gap-3">
-          <KPICard
-            label="Total Spent"
+          <KPICard 
+            label={"Total Spent"}
             value={fmt(total)}
             sub={PERIOD_LABELS[period]}
-            icon={<BarChart2 className="w-4 h-4 text-primary-400" />}
+            icon={<BarChart2 className="w-4 h-4 text-black" />}
             color="border-primary-500/25 bg-primary-500/5"
           />
           <KPICard
             label="Budget Left"
             value={fmt(Math.max(0, budget - total))}
             sub={`of ${fmt(budget)}`}
-            icon={<Calendar className="w-4 h-4 text-accent-green" />}
+            icon={<Calendar className="w-4 h-4 text-black" />}
             color="border-accent-green/25 bg-accent-green/5"
           />
           <KPICard
             label="Trend"
             value={`${Math.abs(trend).toFixed(0)}%`}
             sub={trend >= 0 ? 'more than avg' : 'less than avg'}
-            icon={trend >= 0 ? <TrendingUp className="w-4 h-4 text-accent-orange" /> : <TrendingDown className="w-4 h-4 text-accent-green" />}
+            icon={trend >= 0 ? <TrendingUp className="w-4 h-4 text-black" /> : <TrendingDown className="w-4 h-4 text-accent-green" />}
             color={trend >= 0 ? 'border-accent-orange/25 bg-accent-orange/5' : 'border-accent-green/25 bg-accent-green/5'}
           />
           <KPICard
             label="Next Month Est."
             value={fmt(predictedNext)}
             sub="AI prediction"
-            icon={<CalendarDays className="w-4 h-4 text-accent-purple" />}
+            icon={<CalendarDays className="w-4 h-4 text-black" />}
             color="border-accent-purple/25 bg-accent-purple/5"
           />
         </div>
@@ -131,9 +131,9 @@ export default function MainDashboard() {
         {alerts.length > 0 && (
           <div className="space-y-2">
             {alerts.map((a, i) => (
-              <div key={i} className="flex items-start gap-2.5 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-amber-200">{a}</p>
+              <div key={i} className="flex items-start gap-2.5 p-3 bg-red-500/15 border border-red-800/20 rounded-xl">
+                <AlertTriangle className="w-4 h-4 text-red-800 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-800">{a}</p>
               </div>
             ))}
           </div>
@@ -142,7 +142,7 @@ export default function MainDashboard() {
         {/* Main Chart */}
         <div className="glass rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-white">Spending Over Time</h2>
+            <h2 className="text-sm font-bold text-white">Spending Over Time</h2>
             <div className="flex gap-1 bg-white/5 rounded-lg p-0.5">
               {([['area', 'Area'], ['bar', 'Bar']] as [ChartView, string][]).map(([v, label]) => (
                 <button

@@ -43,7 +43,7 @@ export default function LeftSidebar() {
   const initials = user.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
-    <div className="flex flex-col h-full scrollbar-thin overflow-y-auto">
+    <div className="flex flex-col h-full scrollbar-thin overflow-y-auto bg-[#ede8d0]">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-5 border-b border-white/5">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-pink flex items-center justify-center flex-shrink-0 glow-purple">
@@ -59,7 +59,7 @@ export default function LeftSidebar() {
             {initials}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{user.name}</p>
+            <p className="text-sm font-semibold text-black truncate">{user.name}</p>
             <div className="flex items-center gap-1 mt-0.5">
               <span className="text-primary-400">{USER_TYPE_ICONS[user.userType]}</span>
               <span className="text-xs text-slate-400 truncate">{USER_TYPE_LABELS[user.userType]}</span>
@@ -70,8 +70,8 @@ export default function LeftSidebar() {
         {/* Budget bar */}
         <div className="mt-3 px-1">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-slate-500">Monthly Budget</span>
-            <span className="text-xs text-white font-medium">{fmt(monthTotal)} / {fmt(user.monthlyBudget)}</span>
+            <span className="text-xs text-black">Monthly Budget</span>
+            <span className="text-xs text-slate-500 font-medium">{fmt(monthTotal)} / {fmt(user.monthlyBudget)}</span>
           </div>
           <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
             <motion.div
@@ -93,8 +93,8 @@ export default function LeftSidebar() {
             onClick={() => setActiveTab(id as Tab)}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 ${
               activeTab === id
-                ? 'bg-primary-500/15 text-primary-300 border border-primary-500/25'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                ? 'bg-primary-500/15 text-black border border-primary-500/25'
+                : 'text-slate-400 hover:text-black hover:bg-white/5'
             }`}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />

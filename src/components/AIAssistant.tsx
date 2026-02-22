@@ -244,7 +244,7 @@ export default function AIAssistant() {
   const isListening = voicePhase === 'listening'
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[#ede8d0]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/5 bg-dark-900/60">
         <div className="flex items-center gap-2.5">
@@ -258,7 +258,7 @@ export default function AIAssistant() {
           </div>
           <div>
             <p className="text-sm font-semibold text-white">FinWise AI</p>
-            <p className="text-xs text-slate-500">Powered by Gemini 2.5</p>
+            <p className="text-xs text-white">Powered by Gemini 2.5</p>
           </div>
         </div>
 
@@ -270,7 +270,7 @@ export default function AIAssistant() {
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${
               voiceMode
                 ? 'bg-accent-green/20 text-accent-green border-accent-green/30 shadow-[0_0_8px_rgba(52,211,153,0.2)]'
-                : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border-white/10'
+                : 'bg-white/5 text-white hover:text-black hover:bg-white/10 border-white/10'
             }`}
           >
             <Radio className={`w-3.5 h-3.5 ${voiceMode ? 'animate-pulse' : ''}`} />
@@ -289,7 +289,7 @@ export default function AIAssistant() {
           )}
 
           {/* Reset */}
-          <button onClick={handleReset} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-all" title="Reset chat">
+          <button onClick={handleReset} className="p-1.5 rounded-lg text-white hover:text-black hover:bg-white/5 transition-all" title="Reset chat">
             <RotateCcw className="w-4 h-4" />
           </button>
         </div>
@@ -366,8 +366,8 @@ export default function AIAssistant() {
               {/* Bubble */}
               <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${
                 msg.role === 'user'
-                  ? 'bg-primary-600/70 text-white ml-auto'
-                  : 'bg-white/5 text-slate-200 border border-white/8'
+                  ? 'bg-primary-600/70 text-black ml-auto'
+                  : 'bg-black/5 text-black border border-black/8'
               }`}>
                 {msg.isVoice && (
                   <div className="flex items-center gap-1 mb-1 text-primary-300 text-[10px]">
@@ -375,7 +375,7 @@ export default function AIAssistant() {
                   </div>
                 )}
                 {msg.role === 'assistant' ? (
-                  <div className="prose prose-invert prose-xs max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ul>li]:mb-0.5 [&>ol]:mb-2 [&>h3]:text-xs [&>h3]:font-semibold [&>h3]:mb-1 [&>strong]:text-white">
+                  <div className="prose prose-invert prose-xs max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ul>li]:mb-0.5 [&>ol]:mb-2 [&>h3]:text-xs [&>h3]:font-semibold [&>h3]:mb-1 [&>strong]:text-black">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                 ) : (
@@ -420,7 +420,7 @@ export default function AIAssistant() {
       {showQuick && !voiceMode && (
         <div className="px-4 pb-2">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-slate-500">Quick questions</p>
+            <p className="text-xs text-slate-500">Quick questions:</p>
             <button onClick={() => setShowQuick(false)} className="text-slate-600 hover:text-slate-400">
               <ChevronDown className="w-3 h-3" />
             </button>
@@ -430,7 +430,7 @@ export default function AIAssistant() {
               <button
                 key={q}
                 onClick={() => handleSendMessage(q)}
-                className="text-xs px-2.5 py-1 bg-white/5 hover:bg-primary-500/20 hover:text-primary-300 text-slate-400 rounded-lg border border-white/8 hover:border-primary-500/30 transition-all duration-150"
+                className="text-xs px-2.5 py-1 bg-black/5 hover:bg-primary-500/20 hover:text-black text-slate-400 rounded-lg border border-white/8 hover:border-primary-500/30 transition-all duration-150"
               >
                 {q}
               </button>
@@ -477,7 +477,7 @@ export default function AIAssistant() {
               className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200 flex-shrink-0 ${
                 isListening
                   ? 'bg-red-500/80 text-white animate-pulse'
-                  : 'bg-white/8 text-slate-400 hover:bg-primary-500/20 hover:text-primary-300 border border-white/10 hover:border-primary-500/30'
+                  : 'bg-white/8 text-slate-400 hover:bg-primary-500/20 hover:text-black border border-white/10 hover:border-primary-500/30'
               }`}
               title={isListening ? 'Stop listening' : 'Speak to fill input'}
             >
@@ -488,9 +488,9 @@ export default function AIAssistant() {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your finances..."
+              placeholder="Ask your AI assistant..."
               disabled={loading || isListening}
-              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 transition-all disabled:opacity-50"
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-black placeholder-slate-500 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 transition-all disabled:opacity-50"
             />
 
             <button
@@ -508,7 +508,7 @@ export default function AIAssistant() {
           {!voiceMode && (
             <button
               onClick={() => setShowQuick(!showQuick)}
-              className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
+              className="text-[10px] text-slate-600 hover:text-black transition-colors"
             >
               {showQuick ? 'Hide' : 'Show'} suggestions
             </button>

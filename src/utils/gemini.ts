@@ -13,7 +13,8 @@ Consider the user's type (high school / college / full-time) when calibrating "a
 For high school students, flag anything over $100 as a notable purchase. For college students, flag over $300. For full-time workers, flag over $800.
 When asked about plans or summaries, structure the response clearly with bullet points or numbered steps.
 When making predictions, mention it's based on current trends.
-Keep responses to 3-5 sentences unless a plan or detailed breakdown is requested.`
+Keep responses to 3-5 sentences unless a plan or detailed breakdown is requested.
+Also, please make sure you are writing any money values in word form and not in numerical form`
 
 type ChatSession = ReturnType<ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel>['startChat']>
 let chatSession: ChatSession | null = null

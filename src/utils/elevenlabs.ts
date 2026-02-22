@@ -1,13 +1,32 @@
+export const ELEVEN_VOICES = [
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', description: 'Mature · Reassuring · Confident' },
+  { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', description: 'Calm · Soft · American' },
+  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', description: 'Deep · Professional · Male' },
+  { id: 'XB0fDUnXU5powFXDhCwa', name: 'Charlotte', description: 'Warm · British · Female' },
+  { id: 'nPczCjzI2devNBz1zQrb', name: 'Brian', description: 'Confident · Friendly · Male' },
+  { id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', description: 'Expressive · Youthful · Female' },
+  { id: 'cgSgspJ2msm6clMCkdW9', name: 'Jessica', description: 'Lively · Dynamic · American' },
+] as const
+
+export type ElevenVoiceId = typeof ELEVEN_VOICES[number]['id']
+
+const VOICE_STORAGE_KEY = 'fw_eleven_voice'
+
+export function getSelectedVoiceId(): string {
+  return localStorage.getItem(VOICE_STORAGE_KEY) || ELEVEN_VOICES[0].id
+}
+
+export function setSelectedVoiceId(id: string) {
+  localStorage.setItem(VOICE_STORAGE_KEY, id)
+}
+
 function getElevenKeys(): string[] {
   const envKey = (import.meta.env.VITE_ELEVENLABS_API_KEY as string) || ''
   return envKey ? [envKey] : []
 }
 
-// Sarah - Mature, Reassuring, Confident (confirmed working voice)
-const VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'
-
-async function tryTTS(text: string, key: string): Promise<Response> {
-  return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+async function tryTTS(text: string, key: string, voiceId: string): Promise<Response> {
+  return fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
     method: 'POST',
     headers: {
       'xi-api-key': key,
@@ -28,12 +47,12 @@ async function tryTTS(text: string, key: string): Promise<Response> {
 
 export async function speakText(text: string): Promise<void> {
   const keys = getElevenKeys()
+  const voiceId = getSelectedVoiceId()
 
   for (const key of keys) {
     try {
-      const response = await tryTTS(text, key)
+      const response = await tryTTS(text, key, voiceId)
       if (!response.ok) {
-        // If localStorage key is bad (401/403), clear it so env key is used next time
         continue // try next key
       }
 

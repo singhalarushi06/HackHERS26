@@ -6,10 +6,13 @@ import { buildFinancialContext } from '../utils/spending'
 import { ChatMessage } from '../types'
 import {
   Sparkles, Send, Mic, MicOff, Volume2, VolumeX,
-  RotateCcw, Loader2, Bot, User, ChevronDown
+  RotateCcw, Loader2, Bot, User, ChevronDown, Radio
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
+
+type VoicePhase = 'idle' | 'listening' | 'thinking' | 'speaking'
+
 const QUICK_PROMPTS = [
   "What's my daily spending summary?",
   "Show me my weekly breakdown",
@@ -33,20 +36,36 @@ export default function AIAssistant() {
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [voiceEnabled, setVoiceEnabled] = useState(false)
-  const [isListening, setIsListening] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const [autoSpeak, setAutoSpeak] = useState(false)
+  const [voiceMode, setVoiceMode] = useState(false)
+  const [voicePhase, setVoicePhase] = useState<VoicePhase>('idle')
   const [showQuick, setShowQuick] = useState(true)
+
+  // Refs — let recognition callbacks always see current values (no stale closures)
+  const voiceModeRef = useRef(false)
+  const loadingRef = useRef(false)
+  const sendMessageRef = useRef<(text: string, fromVoice?: boolean) => Promise<void>>(async () => {})
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { voiceModeRef.current = voiceMode }, [voiceMode])
+  useEffect(() => { loadingRef.current = loading }, [loading])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Initialize speech recognition
+  // Init AI chat on mount
+  useEffect(() => {
+    if (!user) return
+    const ctx = buildFinancialContext(
+      transactions, user.monthlyBudget, user.categoryBudgets, user.userType, user.name
+    )
+    try { initChat(ctx) } catch {}
+  }, [])
+
+  // Initialize speech recognition ONCE — uses sendMessageRef to avoid stale closure
   useEffect(() => {
     const SR: typeof SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) return
@@ -57,41 +76,72 @@ export default function AIAssistant() {
     recognition.lang = 'en-US'
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = Array.from({ length: event.results.length }, (_, i) => event.results[i])
-        .map((r) => r[0].transcript)
-        .join('')
+      const parts = Array.from({ length: event.results.length }, (_, i) => event.results[i])
+      const transcript = parts.map((r) => r[0].transcript).join('')
       setInput(transcript)
-      if (event.results[event.results.length - 1].isFinal) {
-        setIsListening(false)
-        handleSendMessage(transcript, true)
+      if (parts[parts.length - 1].isFinal) {
+        setVoicePhase('thinking')
+        // Always call latest handler via ref — never a stale closure
+        sendMessageRef.current(transcript, true)
       }
     }
 
-    recognition.onerror = () => setIsListening(false)
-    recognition.onend = () => setIsListening(false)
+    recognition.onerror = (e: Event) => {
+      const errEvent = e as Event & { error?: string }
+      console.warn('Speech recognition error:', errEvent.error)
+      if (errEvent.error === 'not-allowed') {
+        alert('Microphone access was denied. Please allow microphone access in your browser settings.')
+      }
+      setVoicePhase('idle')
+    }
+    recognition.onend = () => {
+      setVoicePhase((prev) => (prev === 'listening' ? 'idle' : prev))
+    }
 
     recognitionRef.current = recognition
   }, [])
 
   function startListening() {
-    if (!recognitionRef.current) {
+    const rec = recognitionRef.current
+    if (!rec) {
       alert('Voice recognition is not supported in your browser. Please use Chrome.')
       return
     }
-    try {
-      recognitionRef.current.start()
-      setIsListening(true)
-      setInput('')
-    } catch {}
+    stopSpeaking()
+    // Stop any in-progress session first, then start fresh after a tick
+    try { rec.stop() } catch {}
+    setTimeout(() => {
+      try {
+        rec.start()
+        setInput('')
+        setVoicePhase('listening')
+      } catch (e) {
+        console.warn('Recognition start failed:', e)
+        setVoicePhase('idle')
+      }
+    }, 120)
   }
 
   function stopListening() {
-    recognitionRef.current?.stop()
-    setIsListening(false)
+    try { recognitionRef.current?.stop() } catch {}
+    setVoicePhase('idle')
+  }
+
+  function toggleVoiceMode() {
+    const next = !voiceMode
+    setVoiceMode(next)
+    voiceModeRef.current = next
+    if (!next) {
+      stopSpeaking()
+      try { recognitionRef.current?.stop() } catch {}
+      setVoicePhase('idle')
+    } else {
+      setTimeout(() => startListening(), 200)
+    }
   }
 
   const handleSendMessage = useCallback(async (text: string, fromVoice = false) => {
-    if (!text.trim() || loading) return
+    if (!text.trim() || loadingRef.current) return
 
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
@@ -104,6 +154,7 @@ export default function AIAssistant() {
     setMessages((prev) => [...prev, userMsg])
     setInput('')
     setLoading(true)
+    loadingRef.current = true
     setShowQuick(false)
 
     try {
@@ -116,35 +167,44 @@ export default function AIAssistant() {
       }
       setMessages((prev) => [...prev, assistantMsg])
 
-      // Auto-speak if voice mode is on
-      if (autoSpeak || fromVoice) {
-        setIsSpeaking(true)
-        // Clean markdown for speech
+      // Speak if in voice mode or triggered by voice input
+      if (voiceModeRef.current || fromVoice) {
+        setVoicePhase('speaking')
         const cleanText = response
           .replace(/[#*_`~\[\]]/g, '')
           .replace(/\n+/g, ' ')
           .trim()
-          .slice(0, 500) // limit speech length
+          .slice(0, 600)
         await speakText(cleanText)
-        setIsSpeaking(false)
       }
     } catch (err) {
       const errStr = String(err)
-      let errContent = `❌ Something went wrong: ${errStr}. Please try again.`
-      if (errStr.includes('NO_KEY') || errStr.includes('API key')) {
-        errContent = '❌ AI service is temporarily unavailable. Please try again later.'
-      }
-      const errMsg: ChatMessage = {
+      const errContent = errStr.includes('NO_KEY') || errStr.includes('API key')
+        ? '❌ AI service is temporarily unavailable. Please try again later.'
+        : '❌ Something went wrong. Please try again.'
+      setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: errContent,
         timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errMsg])
+      }])
     } finally {
       setLoading(false)
+      loadingRef.current = false
+      // Auto-restart listening if voice mode is still on
+      if (voiceModeRef.current) {
+        setVoicePhase('idle')
+        setTimeout(() => { if (voiceModeRef.current) startListening() }, 500)
+      } else {
+        setVoicePhase('idle')
+      }
     }
-  }, [loading, autoSpeak])
+  }, [])
+
+  // Keep sendMessageRef pointing to the latest handler every render
+  useEffect(() => {
+    sendMessageRef.current = handleSendMessage
+  }, [handleSendMessage])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -166,10 +226,22 @@ export default function AIAssistant() {
     setShowQuick(true)
   }
 
-  function handleStopSpeak() {
+  function handleStopAll() {
     stopSpeaking()
-    setIsSpeaking(false)
+    try { recognitionRef.current?.stop() } catch {}
+    setVoiceMode(false)
+    voiceModeRef.current = false
+    setVoicePhase('idle')
   }
+
+  function handleSpeakMessage(content: string) {
+    const clean = content.replace(/[#*_`~\[\]]/g, '').replace(/\n+/g, ' ').trim().slice(0, 600)
+    setVoicePhase('speaking')
+    speakText(clean).then(() => setVoicePhase('idle'))
+  }
+
+  const isSpeaking = voicePhase === 'speaking'
+  const isListening = voicePhase === 'listening'
 
   return (
     <div className="flex flex-col h-full">
@@ -191,18 +263,27 @@ export default function AIAssistant() {
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* Auto-speak toggle */}
+          {/* Voice Mode toggle */}
           <button
-            onClick={() => setAutoSpeak(!autoSpeak)}
-            title={autoSpeak ? 'Disable auto-speak' : 'Enable auto-speak'}
-            className={`p-1.5 rounded-lg transition-all ${autoSpeak ? 'bg-accent-green/20 text-accent-green' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+            onClick={toggleVoiceMode}
+            title={voiceMode ? 'Turn off voice conversation' : 'Turn on voice conversation'}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${
+              voiceMode
+                ? 'bg-accent-green/20 text-accent-green border-accent-green/30 shadow-[0_0_8px_rgba(52,211,153,0.2)]'
+                : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border-white/10'
+            }`}
           >
-            {autoSpeak ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            <Radio className={`w-3.5 h-3.5 ${voiceMode ? 'animate-pulse' : ''}`} />
+            {voiceMode ? 'Voice ON' : 'Voice'}
           </button>
 
-          {/* Stop speaking */}
-          {isSpeaking && (
-            <button onClick={handleStopSpeak} className="p-1.5 rounded-lg bg-accent-orange/20 text-accent-orange" title="Stop speaking">
+          {/* Stop button when active */}
+          {(isSpeaking || isListening) && (
+            <button
+              onClick={handleStopAll}
+              className="p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all"
+              title="Stop"
+            >
               <VolumeX className="w-4 h-4" />
             </button>
           )}
@@ -214,29 +295,53 @@ export default function AIAssistant() {
         </div>
       </div>
 
-      {/* Voice wave indicator */}
-      {isListening && (
-        <div className="flex items-center justify-center gap-1 py-2 bg-primary-500/10 border-b border-primary-500/20">
-          <div className="flex items-end gap-0.5 h-4">
-            {[1,2,3,4,5].map((i) => (
-              <div key={i} className="voice-bar w-1 bg-primary-400 rounded-full" style={{ animationDelay: `${(i-1)*0.1}s` }} />
-            ))}
-          </div>
-          <span className="text-xs text-primary-300 ml-1">Listening...</span>
-        </div>
-      )}
-
-      {/* Speaking indicator */}
-      {isSpeaking && (
-        <div className="flex items-center justify-center gap-2 py-2 bg-accent-green/10 border-b border-accent-green/20">
-          <div className="flex items-end gap-0.5 h-4">
-            {[1,2,3,4,5].map((i) => (
-              <div key={i} className="voice-bar w-1 bg-accent-green rounded-full" style={{ animationDelay: `${(i-1)*0.1}s` }} />
-            ))}
-          </div>
-          <span className="text-xs text-accent-green">Speaking...</span>
-        </div>
-      )}
+      {/* Voice phase status bar */}
+      <AnimatePresence>
+        {voicePhase !== 'idle' && (
+          <motion.div
+            key={voicePhase}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15 }}
+            className={`flex items-center justify-center gap-2 py-2.5 border-b ${
+              voicePhase === 'listening'
+                ? 'bg-primary-500/10 border-primary-500/20'
+                : voicePhase === 'thinking'
+                ? 'bg-accent-purple/10 border-accent-purple/20'
+                : 'bg-accent-green/10 border-accent-green/20'
+            }`}
+          >
+            {voicePhase === 'listening' && (
+              <>
+                <div className="flex items-end gap-0.5 h-4">
+                  {[1,2,3,4,5].map((i) => (
+                    <div key={i} className="voice-bar w-1 bg-primary-400 rounded-full" style={{ animationDelay: `${(i-1)*0.1}s` }} />
+                  ))}
+                </div>
+                <span className="text-xs text-primary-300 font-medium">Listening — speak now...</span>
+              </>
+            )}
+            {voicePhase === 'thinking' && (
+              <>
+                <Loader2 className="w-3.5 h-3.5 text-accent-purple animate-spin" />
+                <span className="text-xs text-accent-purple font-medium">Thinking...</span>
+              </>
+            )}
+            {voicePhase === 'speaking' && (
+              <>
+                <div className="flex items-end gap-0.5 h-4">
+                  {[1,2,3,4,5].map((i) => (
+                    <div key={i} className="voice-bar w-1 bg-accent-green rounded-full" style={{ animationDelay: `${(i-1)*0.1}s` }} />
+                  ))}
+                </div>
+                <span className="text-xs text-accent-green font-medium">Speaking...</span>
+                <button onClick={handleStopAll} className="text-[10px] text-accent-green/60 hover:text-accent-green underline ml-1">skip</button>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto scrollbar-thin px-4 py-3 space-y-3">
@@ -284,11 +389,7 @@ export default function AIAssistant() {
               {/* TTS button for assistant messages */}
               {msg.role === 'assistant' && (
                 <button
-                  onClick={() => {
-                    const clean = msg.content.replace(/[#*_`~\[\]]/g, '').replace(/\n+/g, ' ').trim().slice(0, 500)
-                    setIsSpeaking(true)
-                    speakText(clean).then(() => setIsSpeaking(false))
-                  }}
+                  onClick={() => handleSpeakMessage(msg.content)}
                   className="self-end mb-1 p-1 text-slate-600 hover:text-primary-400 transition-colors"
                   title="Read aloud"
                 >
@@ -316,7 +417,7 @@ export default function AIAssistant() {
       </div>
 
       {/* Quick Prompts */}
-      {showQuick && (
+      {showQuick && !voiceMode && (
         <div className="px-4 pb-2">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-slate-500">Quick questions</p>
@@ -340,48 +441,78 @@ export default function AIAssistant() {
 
       {/* Input */}
       <div className="px-4 pb-4 pt-2 border-t border-white/5">
-        <form onSubmit={handleSubmit} className="flex items-center gap-2">
-          {/* Voice button */}
-          <button
-            type="button"
-            onClick={isListening ? stopListening : startListening}
-            disabled={loading}
-            className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200 flex-shrink-0 ${
-              isListening
-                ? 'bg-red-500/80 text-white glow-purple animate-pulse'
-                : 'bg-white/8 text-slate-400 hover:bg-primary-500/20 hover:text-primary-300 border border-white/10 hover:border-primary-500/30'
-            }`}
-            title={isListening ? 'Stop listening' : 'Start voice input'}
-          >
-            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-          </button>
+        {voiceMode ? (
+          /* Voice mode — big tap-to-speak button */
+          <div className="flex flex-col items-center gap-2 py-1">
+            <button
+              onClick={voicePhase === 'listening' ? stopListening : startListening}
+              disabled={voicePhase === 'thinking' || voicePhase === 'speaking'}
+              className={`w-full flex items-center justify-center gap-2.5 py-3 rounded-xl font-medium text-sm transition-all duration-200 border ${
+                voicePhase === 'listening'
+                  ? 'bg-red-500/80 border-red-500/50 text-white animate-pulse'
+                  : voicePhase === 'thinking' || voicePhase === 'speaking'
+                  ? 'bg-white/5 border-white/10 text-slate-500 cursor-not-allowed opacity-60'
+                  : 'bg-primary-600/30 border-primary-500/40 text-primary-200 hover:bg-primary-600/50'
+              }`}
+            >
+              {voicePhase === 'listening' ? (
+                <><MicOff className="w-4 h-4" /> Tap to stop</>
+              ) : voicePhase === 'thinking' ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Thinking...</>
+              ) : voicePhase === 'speaking' ? (
+                <><Volume2 className="w-4 h-4" /> Speaking...</>
+              ) : (
+                <><Mic className="w-4 h-4" /> Tap to speak</>
+              )}
+            </button>
+            <p className="text-[10px] text-slate-600">Auto-listens again after each response</p>
+          </div>
+        ) : (
+          /* Text mode */
+          <form onSubmit={handleSubmit} className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={isListening ? stopListening : startListening}
+              disabled={loading}
+              className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200 flex-shrink-0 ${
+                isListening
+                  ? 'bg-red-500/80 text-white animate-pulse'
+                  : 'bg-white/8 text-slate-400 hover:bg-primary-500/20 hover:text-primary-300 border border-white/10 hover:border-primary-500/30'
+              }`}
+              title={isListening ? 'Stop listening' : 'Speak to fill input'}
+            >
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
 
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about your finances..."
-            disabled={loading || isListening}
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 transition-all disabled:opacity-50"
-          />
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about your finances..."
+              disabled={loading || isListening}
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/20 transition-all disabled:opacity-50"
+            />
 
-          <button
-            type="submit"
-            disabled={!input.trim() || loading}
-            className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-500 hover:from-primary-500 hover:to-accent-purple text-white rounded-xl transition-all duration-200 shadow-lg flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <Send className="w-4 h-4" />
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={!input.trim() || loading}
+              className="w-9 h-9 flex items-center justify-center bg-gradient-to-br from-primary-600 to-primary-500 hover:from-primary-500 hover:to-accent-purple text-white rounded-xl transition-all duration-200 shadow-lg flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
+        )}
 
         <div className="flex items-center justify-between mt-2">
           <p className="text-[10px] text-slate-600">Powered by Gemini 2.5 Flash · ElevenLabs TTS</p>
-          <button
-            onClick={() => setShowQuick(!showQuick)}
-            className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
-          >
-            {showQuick ? 'Hide' : 'Show'} suggestions
-          </button>
+          {!voiceMode && (
+            <button
+              onClick={() => setShowQuick(!showQuick)}
+              className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
+            >
+              {showQuick ? 'Hide' : 'Show'} suggestions
+            </button>
+          )}
         </div>
       </div>
     </div>

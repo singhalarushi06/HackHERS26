@@ -32,10 +32,9 @@ const USER_TYPE_LABELS: Record<string, string> = {
   full_time: 'Professional',
 }
 
-export default function LeftSidebar() {
+export default function LeftSidebar({ activeTab, onTabChange }: { activeTab: string; onTabChange: (tab: string) => void }) {
   const { user, transactions, logout } = useAuth()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const [showAddTx, setShowAddTx] = useState(false)
 
   if (!user) return null
@@ -92,7 +91,7 @@ export default function LeftSidebar() {
         {NAV.map(({ id, icon: Icon, label }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id as Tab)}
+            onClick={() => onTabChange(id)}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150 ${
               activeTab === id
                 ? 'bg-primary-500/15 text-primary-300 border border-primary-500/25'

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import LeftSidebar from '../components/LeftSidebar'
 import Transactions from '../components/Transactions'
@@ -8,6 +8,8 @@ import { buildFinancialContext } from '../utils/spending'
 
 export default function DashboardPage() {
   const { user, transactions } = useAuth()
+
+  const [activeTab, setActiveTab] = useState('transactions')
 
   useEffect(() => {
     if (user) {
@@ -32,7 +34,7 @@ export default function DashboardPage() {
     <div className="flex h-screen w-full bg-dark-950 overflow-hidden">
       {/* Left Panel */}
       <div className="w-64 flex-shrink-0 flex flex-col border-r border-white/5 bg-dark-900/60">
-        <LeftSidebar />
+        <LeftSidebar activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
       {/* Middle Panel */}

@@ -76,7 +76,7 @@ export default function MainDashboard() {
       <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-dark-900/40 sticky top-0 z-10 backdrop-blur-sm">
         <div>
           <h1 className="text-lg font-bold text-white">Transaction Summary</h1>
-          <p className="text-xs text-slate-500">View your spendings below, {user.name.split(' ')[0]} 👋</p>
+          <p className="text-xs text-slate-500">View your spendings below, {user.name.split(' ')[0]}</p>
         </div>
         {/* Period Tabs */}
         <div className="flex gap-1 bg-white/5 rounded-xl p-0.5">

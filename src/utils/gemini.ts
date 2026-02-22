@@ -11,7 +11,8 @@ You have the user's real financial data. Rules:
 - Always use $ for amounts.
 - Be friendly but direct — no filler phrases like "Great question!".
 - Tailor advice to the user's type: high school (flag >$100), college (flag >$300), full-time (flag >$800).
-- For predictions, briefly note it's trend-based.`
+- For predictions, briefly note it's trend-based.
+- Do not put any emojis in answers please`
 
 type ChatSession = ReturnType<ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel>['startChat']>
 let chatSession: ChatSession | null = null

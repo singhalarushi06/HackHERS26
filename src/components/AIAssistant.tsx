@@ -190,13 +190,13 @@ export default function AIAssistant() {
       const errStr = String(err)
       let errContent: string
       if (errStr.includes('NO_KEY') || errStr.includes('not initialized')) {
-        errContent = '⚠️ AI is still loading — please send your message again in a moment.'
+        errContent = 'AI is still loading — please send your message again in a moment.'
       } else if (errStr.includes('429') || errStr.includes('quota') || errStr.includes('RESOURCE_EXHAUSTED')) {
-        errContent = '⚠️ Rate limit reached. Please wait ~15 seconds before sending another message.'
+        errContent = 'Rate limit reached. Please wait ~15 seconds before sending another message.'
       } else if (errStr.includes('fetch') || errStr.includes('network') || errStr.includes('Failed')) {
-        errContent = '⚠️ Network error. Check your connection and try again.'
+        errContent = 'Network error. Check your connection and try again.'
       } else {
-        errContent = `⚠️ Error: ${errStr.slice(0, 120)}. The session has been reset — please send your message again.`
+        errContent = `Error: ${errStr.slice(0, 120)}. The session has been reset — please send your message again.`
       }
       // Replace the empty placeholder with the error
       setMessages((prev) => prev.map((m) =>

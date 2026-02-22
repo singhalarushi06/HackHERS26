@@ -55,7 +55,7 @@ export default function DashboardPage() {
       case 'categories': return <CategoriesPanel />
       case 'settings': return <ProfileSettings />
       case 'goals': return <PlaceholderPanel icon={<Target className="w-7 h-7 text-accent-green" />} title="Goals" description="Set and track your savings goals here." />
-      case 'agent': return <PlaceholderPanel icon={<span className="text-3xl">🤖</span>} title="AI Assistant" description="Your AI assistant is in the right panel — ask it anything!" />
+      case 'agent': return <PlaceholderPanel icon={<span className="text-3xl"></span>} title="AI Assistant" description="Your AI assistant is in the right panel — ask it anything!" />
       default: return <MainDashboard />
     }
   }

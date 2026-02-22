@@ -1,4 +1,4 @@
-# Money-Mover
+# FinWise
 
 ## **Project Goal**
 We want to create a budgeting app to help people keep better track of their spending and become more mindful with tailored guidance for their goals and situations.
@@ -31,7 +31,6 @@ We want to create a budgeting app to help people keep better track of their spen
    - Best Overall Hack
  - Superlative Tracks:
    - Best Use of Gemini API
-   - Best Use of Solana
    - Best Use of ElevenLabs
 
 ## **Collaborators**

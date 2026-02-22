@@ -96,58 +96,6 @@ export default function MainDashboard() {
 
       <div className="flex-1 p-5 space-y-5">
 
-        {/* Category Charts Row */}
-        <div className="grid grid-cols-2 gap-4">
-          {/* Pie Chart */}
-          <div className="glass rounded-2xl p-5">
-            <h2 className="text-sm font-semibold text-white mb-3">Spending by Category</h2>
-            {categoryData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={180}>
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={75}
-                    dataKey="total"
-                    nameKey="label"
-                    paddingAngle={3}
-                  >
-                    {categoryData.map((entry) => (
-                      <Cell key={entry.category} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => fmt(value as number)} contentStyle={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#fff', fontSize: 12 }} />
-                  <Legend
-                    iconSize={8}
-                    iconType="circle"
-                    formatter={(value) => <span style={{ color: '#94a3b8', fontSize: 11 }}>{value}</span>}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-[180px] text-slate-500 text-sm">No spending data</div>
-            )}
-          </div>
-
-          {/* Stacked bar by category */}
-          <div className="glass rounded-2xl p-5">
-            <h2 className="text-sm font-semibold text-white mb-3">Weekly Category Breakdown</h2>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={weeklyData.slice(-4)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
-                <Tooltip content={<CustomTooltip />} />
-                {ALL_CATEGORIES.map((cat) => (
-                  <Bar key={cat} dataKey={cat} name={getCategoryLabel(cat)} stackId="a" fill={getCategoryColor(cat)} />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
         {/* Category Budget Bars */}
         <div className="glass rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-white mb-4">Category Budget Tracker</h2>
@@ -212,6 +160,59 @@ export default function MainDashboard() {
             ))}
           </div>
         </div>
+
+        {/* Category Charts Row */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Pie Chart */}
+          <div className="glass rounded-2xl p-5">
+            <h2 className="text-sm font-semibold text-white mb-3">Spending by Category</h2>
+            {categoryData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={45}
+                    outerRadius={75}
+                    dataKey="total"
+                    nameKey="label"
+                    paddingAngle={3}
+                  >
+                    {categoryData.map((entry) => (
+                      <Cell key={entry.category} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => fmt(value as number)} contentStyle={{ background: 'rgba(15,23,42,0.95)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#fff', fontSize: 12 }} />
+                  <Legend
+                    iconSize={8}
+                    iconType="circle"
+                    formatter={(value) => <span style={{ color: '#94a3b8', fontSize: 11 }}>{value}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[180px] text-slate-500 text-sm">No spending data</div>
+            )}
+          </div>
+
+          {/* Stacked bar by category */}
+          <div className="glass rounded-2xl p-5">
+            <h2 className="text-sm font-semibold text-white mb-3">Weekly Category Breakdown</h2>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={weeklyData.slice(-4)}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                <Tooltip content={<CustomTooltip />} />
+                {ALL_CATEGORIES.map((cat) => (
+                  <Bar key={cat} dataKey={cat} name={getCategoryLabel(cat)} stackId="a" fill={getCategoryColor(cat)} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
       </div>
     </div>
   )

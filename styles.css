@@ -76,6 +76,24 @@ body {
     border-radius: 4px;
     box-sizing: border-box; 
 }
+
+.input-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    background: #2a2535;
+    color: white;
+    cursor: pointer;
+}
+
+.error-text {
+    color: #ff6b6b;
+    font-size: 0.8rem;
+    margin: -0.6rem 0 0.6rem;
+    text-align: center;
+}
 .btn-primary {
     width: 100%;
     padding: 13px;
@@ -95,5 +113,30 @@ body {
     text-align: center;
     font-size: 0.8rem;
     margin-top: 1rem;
+    color: white;
+}
+
+.demo-hint {
+    margin-top: 1.2rem;
+    padding: 0.75rem 1rem;
+    background: rgba(129, 84, 255, 0.12);
+    border: 1px solid rgba(129, 84, 255, 0.3);
+    border-radius: 10px;
+}
+
+.demo-title {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #c4a8ff;
+    margin: 0 0 0.4rem;
+}
+
+.demo-text {
+    font-size: 0.78rem;
+    color: #aaa;
+    margin: 0.2rem 0;
+}
+
+.demo-text span {
     color: white;
 }

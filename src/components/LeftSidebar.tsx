@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
   TrendingUp, LayoutDashboard, List, PieChart, Settings,
@@ -9,7 +8,6 @@ import {
 import { motion } from 'framer-motion'
 import { fmt, filterByPeriod, getTotalSpending } from '../utils/spending'
 import AddTransactionModal from './AddTransactionModal'
-import Transactions from '../components/Transactions'
 
 type Tab = 'dashboard' | 'transactions' | 'categories' | 'goals' | 'settings'
 
@@ -35,7 +33,6 @@ const USER_TYPE_LABELS: Record<string, string> = {
 
 export default function LeftSidebar({ activeTab, onTabChange }: { activeTab: string; onTabChange: (tab: string) => void }) {
   const { user, transactions, logout } = useAuth()
-  const navigate = useNavigate()
   const [showAddTx, setShowAddTx] = useState(false)
 
   if (!user) return null
@@ -127,7 +124,7 @@ export default function LeftSidebar({ activeTab, onTabChange }: { activeTab: str
       {/* Logout */}
       <div className="px-4 pb-4">
         <button
-          onClick={() => { logout(); navigate('/login') }}
+          onClick={() => { logout(); window.location.href = '/' }}
           className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-500 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all duration-150"
         >
           <LogOut className="w-4 h-4" />

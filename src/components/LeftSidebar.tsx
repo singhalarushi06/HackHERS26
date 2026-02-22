@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
   TrendingUp, LayoutDashboard, List, PieChart, Settings,
-  LogOut, GraduationCap, BookOpen, Briefcase, Plus, Target
+  LogOut, GraduationCap, BookOpen, Briefcase, Plus, Target,
+  Bot
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { fmt, filterByPeriod, getTotalSpending } from '../utils/spending'
@@ -14,7 +15,7 @@ type Tab = 'dashboard' | 'transactions' | 'categories' | 'goals' | 'settings'
 
 const NAV = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { id: 'agent', icon: List, label: 'AI Assistant' },
+  { id: 'agent', icon: Bot, label: 'AI Assistant' },
   { id: 'transactions', icon: List, label: 'Transaction History' },
   { id: 'categories', icon: PieChart, label: 'Categories' },
   { id: 'goals', icon: Target, label: 'Goals' },

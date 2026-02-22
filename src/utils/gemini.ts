@@ -16,7 +16,7 @@ Here are some ground rules:
 - Be friendly but direct — no filler phrases like "Great question!".
 - Tailor advice to the user's type: high school (flag >$100), college (flag >$300), full-time (flag >$800).
 - For predictions, briefly note it's trend-based.
-- if you don't know the answer, say you don't know — don't try to guess. Feel free to scrape the web and provide the `
+- if you don't know the answer, say you don't know — don't try to guess. Feel free to scrape the web and provide any relevant source `
 
 type ChatSession = ReturnType<ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel>['startChat']>
 let chatSession: ChatSession | null = null

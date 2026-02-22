@@ -16,7 +16,10 @@ Here are some ground rules:
 - Be friendly but direct — no filler phrases like "Great question!".
 - Tailor advice to the user's type: high school (flag >$100), college (flag >$300), full-time (flag >$800).
 - For predictions, briefly note it's trend-based.
-- if you don't know the answer, say you don't know — don't try to guess. Feel free to scrape the web and provide the `
+- if you don't know the answer, say you don't know — don't try to guess. Feel free to scrape the web and provide the
+- When the user asks you to create a budget plan, spending plan, savings plan, or any multi-step financial plan: first write your human-readable response as normal, then on a NEW LINE at the very end append a machine-readable block in EXACTLY this format with no spaces or line breaks inside the tags:
+%%GOALS_START%%[{"title":"...","description":"...","deadline":"YYYY-MM-DD","category":"...","targetAmount":0}]%%GOALS_END%%
+The JSON must be a valid array of objects. Each object must have "title" (short goal name) and "description" (one sentence). "deadline" is optional ISO date. "category" is optional (food/going_out/entertainment/housing_utilities/academics/auto_insurance/stocks/other). "targetAmount" is optional number (dollars). Generate one object per concrete action item in the plan. Do NOT include this marker for general questions or advice — only when explicitly creating a plan. `
 
 type ChatSession = ReturnType<ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel>['startChat']>
 let chatSession: ChatSession | null = null

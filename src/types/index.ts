@@ -70,3 +70,15 @@ export interface SpendingAlert {
   category?: Category
   date: string
 }
+
+export interface Goal {
+  id: string
+  title: string
+  description: string
+  targetAmount?: number
+  currentAmount?: number
+  deadline?: string
+  category?: string
+  createdAt: string
+  status: 'active' | 'completed'
+}

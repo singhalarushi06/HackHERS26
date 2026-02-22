@@ -5,10 +5,12 @@ import MainDashboard from '../components/MainDashboard'
 import Transactions from '../components/Transactions'
 import CategoriesPanel from '../components/CategoriesPanel'
 import ProfileSettings from '../components/ProfileSettings'
+import GoalsPanel from '../components/GoalsPanel'
 import AIAssistant from '../components/AIAssistant'
 import { initChat } from '../utils/gemini'
 import { buildFinancialContext } from '../utils/spending'
-import { Target } from 'lucide-react'
+import { loadGoals } from '../utils/goalsStore'
+import { Goal } from '../types'
 
 type Tab = 'dashboard' | 'agent' | 'transactions' | 'categories' | 'goals' | 'settings'
 
@@ -29,6 +31,12 @@ function PlaceholderPanel({ icon, title, description }: { icon: React.ReactNode;
 export default function DashboardPage() {
   const { user, transactions } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
+  const [goals, setGoals] = useState<Goal[]>(() => loadGoals())
+
+  // Bubble up goal changes from AIAssistant (adds them) or GoalsPanel (edits/deletes)
+  function handleGoalsChange(updated: Goal[]) {
+    setGoals(updated)
+  }
 
   useEffect(() => {
     if (user) {
@@ -54,7 +62,7 @@ export default function DashboardPage() {
       case 'transactions': return <Transactions />
       case 'categories': return <CategoriesPanel />
       case 'settings': return <ProfileSettings />
-      case 'goals': return <PlaceholderPanel icon={<Target className="w-7 h-7 text-accent-green" />} title="Goals" description="Set and track your savings goals here." />
+      case 'goals': return <GoalsPanel goals={goals} onGoalsChange={handleGoalsChange} />
       case 'agent': return <PlaceholderPanel icon={<span className="text-3xl"></span>} title="AI Assistant" description="Your AI assistant is in the right panel — ask it anything!" />
       default: return <MainDashboard />
     }
@@ -74,7 +82,7 @@ export default function DashboardPage() {
 
       {/* Right Panel */}
       <div className="w-96 flex-shrink-0 flex flex-col bg-dark-900/40">
-        <AIAssistant />
+        <AIAssistant onAddGoals={handleGoalsChange} />
       </div>
     </div>
   )

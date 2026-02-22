@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext'
 import { streamMessage, resetChat, initChat } from '../utils/gemini'
 import { speakText, stopSpeaking } from '../utils/elevenlabs'
 import { buildFinancialContext } from '../utils/spending'
-import { ChatMessage } from '../types'
+import { addGoals } from '../utils/goalsStore'
+import { ChatMessage, Goal } from '../types'
 import {
   Sparkles, Send, Mic, MicOff, Volume2, VolumeX,
   RotateCcw, Loader2, Bot, User, ChevronDown, Radio
@@ -24,7 +25,13 @@ const QUICK_PROMPTS = [
   "Alert me on overspending areas",
 ]
 
-export default function AIAssistant() {
+const GOALS_RE = /%%GOALS_START%%([\s\S]*?)%%GOALS_END%%/
+
+interface AIAssistantProps {
+  onAddGoals?: (goals: Goal[]) => void
+}
+
+export default function AIAssistant({ onAddGoals }: AIAssistantProps = {}) {
   const { user, transactions } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -174,6 +181,22 @@ export default function AIAssistant() {
           m.id === assistantId ? { ...m, content: fullResponse } : m
         ))
       })
+
+      // Parse and strip goals marker if present
+      const goalsMatch = fullResponse.match(GOALS_RE)
+      if (goalsMatch) {
+        try {
+          const planItems = JSON.parse(goalsMatch[1])
+          const updatedGoals = addGoals(planItems)
+          onAddGoals?.(updatedGoals)
+        } catch (e) {
+          console.warn('[FinWise] Failed to parse goals JSON:', e)
+        }
+        fullResponse = fullResponse.replace(GOALS_RE, '').trim()
+        setMessages((prev) => prev.map((m) =>
+          m.id === assistantId ? { ...m, content: fullResponse } : m
+        ))
+      }
 
       // Speak the complete response if in voice mode
       if (voiceModeRef.current || fromVoice) {

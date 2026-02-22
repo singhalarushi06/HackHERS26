@@ -160,15 +160,15 @@ export default function MainDashboard() {
               <AreaChart data={period === 'month' ? monthlyData : period === 'week' ? weeklyData : dailyData}>
                 <defs>
                   <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f4" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6366f4" stopOpacity={0.02} />
+                    <stop offset="5%" stopColor="#f35b54" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#f35b54" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                 <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="total" name="Total" stroke="#6366f4" strokeWidth={2} fill="url(#colorTotal)" dot={false} />
+                <Area type="monotone" dataKey="total" name="Total" stroke="#f35b54" strokeWidth={2} fill="url(#colorTotal)" dot={false} />
               </AreaChart>
             ) : (
               <BarChart data={period === 'month' ? monthlyData : period === 'week' ? weeklyData : dailyData}>
@@ -176,7 +176,7 @@ export default function MainDashboard() {
                 <XAxis dataKey="label" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="total" name="Total" fill="#6366f4" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="total" name="Total" fill="#f35b54" radius={[4, 4, 0, 0]} />
               </BarChart>
             )}
           </ResponsiveContainer>

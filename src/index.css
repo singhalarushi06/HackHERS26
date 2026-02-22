@@ -39,7 +39,7 @@
     border-color: rgba(99, 102, 241, 0.35);
   }
   .gradient-text {
-    background: linear-gradient(135deg, #6366f4 0%, #ec4899 100%);
+    background: linear-gradient(135deg, #f35b54 0%, #f89c51 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -66,7 +66,7 @@
   content: '|';
   animation: blink 1s infinite;
   margin-left: 1px;
-  color: #6366f4;
+  color: #f35b54;
 }
 
 /* Voice wave bars */

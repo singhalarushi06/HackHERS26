@@ -4,17 +4,14 @@ function getGeminiKey(): string {
   return (import.meta.env.VITE_GEMINI_API_KEY as string) || ''
 }
 
-const SYSTEM_PROMPT = `You are FinWise AI, a smart personal finance assistant embedded in the FinWise budgeting app. 
-You have access to the user's real financial data shown below. 
-Be concise, friendly, and insightful. 
-When giving monetary amounts, always use $ formatting.
-Offer concrete, personalized recommendations based on the data.
-Consider the user's type (high school / college / full-time) when calibrating "alarming" spending thresholds.
-For high school students, flag anything over $100 as a notable purchase. For college students, flag over $300. For full-time workers, flag over $800.
-When asked about plans or summaries, structure the response clearly with bullet points or numbered steps.
-When making predictions, mention it's based on current trends.
-Keep responses to 3-5 sentences unless a plan or detailed breakdown is requested.
-Also, please make sure you are writing any money values in word form and not in numerical form`
+const SYSTEM_PROMPT = `You are FinWise AI, a concise personal finance assistant in the FinWise app.
+You have the user's real financial data. Rules:
+- Keep responses SHORT: 1-3 sentences max unless a detailed breakdown is explicitly asked for.
+- Use bullet points only when listing 3+ items.
+- Always use $ for amounts.
+- Be friendly but direct — no filler phrases like "Great question!".
+- Tailor advice to the user's type: high school (flag >$100), college (flag >$300), full-time (flag >$800).
+- For predictions, briefly note it's trend-based.`
 
 type ChatSession = ReturnType<ReturnType<typeof GoogleGenerativeAI.prototype.getGenerativeModel>['startChat']>
 let chatSession: ChatSession | null = null
@@ -40,10 +37,51 @@ export function initChat(financialContext: string) {
   })
 }
 
+// Ensure chat is ready — reinit from lastContext if session was lost
+function ensureChat() {
+  if (!chatSession) {
+    if (!lastContext) throw new Error('NO_KEY')
+    initChat(lastContext)
+  }
+}
+
 export async function sendMessage(message: string): Promise<string> {
-  if (!chatSession) throw new Error('Chat not initialized. Add your Gemini API key in Settings.')
+  if (!chatSession) throw new Error('NO_KEY')
   const result = await chatSession.sendMessage(message)
   return result.response.text()
+}
+
+function isRateLimit(err: unknown): boolean {
+  const s = String(err)
+  return s.includes('429') || s.includes('RESOURCE_EXHAUSTED') || s.includes('quota')
+}
+
+export async function streamMessage(
+  message: string,
+  onChunk: (chunk: string) => void,
+  retries = 3,
+  delayMs = 5000
+): Promise<string> {
+  ensureChat()
+  let full = ''
+  try {
+    const result = await chatSession!.sendMessageStream(message)
+    for await (const chunk of result.stream) {
+      const text = chunk.text()
+      full += text
+      onChunk(text)
+    }
+    return full
+  } catch (err) {
+    if (isRateLimit(err) && retries > 0) {
+      // Rate limited — wait and retry without resetting the session
+      await new Promise(res => setTimeout(res, delayMs))
+      return streamMessage(message, onChunk, retries - 1, delayMs * 1.5)
+    }
+    // Non-rate-limit error: reset the session so the next call starts fresh
+    chatSession = null
+    throw err
+  }
 }
 
 export function resetChat(financialContext: string) {

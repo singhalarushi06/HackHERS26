@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { sendMessage, resetChat, initChat } from '../utils/gemini'
+import { streamMessage, resetChat, initChat } from '../utils/gemini'
 import { speakText, stopSpeaking } from '../utils/elevenlabs'
 import { buildFinancialContext } from '../utils/spending'
 import { ChatMessage } from '../types'
@@ -157,20 +157,28 @@ export default function AIAssistant() {
     loadingRef.current = true
     setShowQuick(false)
 
-    try {
-      const response = await sendMessage(text.trim())
-      const assistantMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response,
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, assistantMsg])
+    // Add empty assistant message immediately — will be filled by streaming
+    const assistantId = (Date.now() + 1).toString()
+    setMessages((prev) => [...prev, {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+    }])
 
-      // Speak if in voice mode or triggered by voice input
+    try {
+      let fullResponse = ''
+      await streamMessage(text.trim(), (chunk) => {
+        fullResponse += chunk
+        setMessages((prev) => prev.map((m) =>
+          m.id === assistantId ? { ...m, content: fullResponse } : m
+        ))
+      })
+
+      // Speak the complete response if in voice mode
       if (voiceModeRef.current || fromVoice) {
         setVoicePhase('speaking')
-        const cleanText = response
+        const cleanText = fullResponse
           .replace(/[#*_`~\[\]]/g, '')
           .replace(/\n+/g, ' ')
           .trim()
@@ -178,16 +186,22 @@ export default function AIAssistant() {
         await speakText(cleanText)
       }
     } catch (err) {
+      console.error('[FinWise AI error]', err)
       const errStr = String(err)
-      const errContent = errStr.includes('NO_KEY') || errStr.includes('API key')
-        ? '❌ AI service is temporarily unavailable. Please try again later.'
-        : '❌ Something went wrong. Please try again.'
-      setMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: errContent,
-        timestamp: new Date(),
-      }])
+      let errContent: string
+      if (errStr.includes('NO_KEY') || errStr.includes('not initialized')) {
+        errContent = '⚠️ AI is still loading — please send your message again in a moment.'
+      } else if (errStr.includes('429') || errStr.includes('quota') || errStr.includes('RESOURCE_EXHAUSTED')) {
+        errContent = '⚠️ Rate limit reached. Please wait ~15 seconds before sending another message.'
+      } else if (errStr.includes('fetch') || errStr.includes('network') || errStr.includes('Failed')) {
+        errContent = '⚠️ Network error. Check your connection and try again.'
+      } else {
+        errContent = `⚠️ Error: ${errStr.slice(0, 120)}. The session has been reset — please send your message again.`
+      }
+      // Replace the empty placeholder with the error
+      setMessages((prev) => prev.map((m) =>
+        m.id === assistantId ? { ...m, content: errContent } : m
+      ))
     } finally {
       setLoading(false)
       loadingRef.current = false
@@ -376,7 +390,15 @@ export default function AIAssistant() {
                 )}
                 {msg.role === 'assistant' ? (
                   <div className="prose prose-invert prose-xs max-w-none [&>p]:mb-2 [&>ul]:mb-2 [&>ul>li]:mb-0.5 [&>ol]:mb-2 [&>h3]:text-xs [&>h3]:font-semibold [&>h3]:mb-1 [&>strong]:text-white">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    {msg.content ? (
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    ) : (
+                      <div className="flex items-center gap-1 py-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <span>{msg.content}</span>

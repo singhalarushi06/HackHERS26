@@ -8,15 +8,17 @@ import {
 import { motion } from 'framer-motion'
 import { fmt, filterByPeriod, getTotalSpending } from '../utils/spending'
 import AddTransactionModal from './AddTransactionModal'
+import Transactions from '../components/Transactions'
 
 type Tab = 'dashboard' | 'transactions' | 'categories' | 'goals' | 'settings'
 
 const NAV = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { id: 'transactions', icon: List, label: 'Transactions' },
+  { id: 'agent', icon: List, label: 'AI Assistant' },
+  { id: 'transactions', icon: List, label: 'Transaction History' },
   { id: 'categories', icon: PieChart, label: 'Categories' },
   { id: 'goals', icon: Target, label: 'Goals' },
-  { id: 'settings', icon: Settings, label: 'Settings' },
+  { id: 'settings', icon: Settings, label: 'Profile Settings' },
 ] as const
 
 const USER_TYPE_ICONS: Record<string, React.ReactNode> = {
